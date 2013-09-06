@@ -44,6 +44,9 @@ def all_mappings(project):
 @app.route('/v1/<project_name>/mapping', methods=['PUT'])
 def create_mapping(project_name):
     data = request.get_json(True)
+
+    if 'domain' not in data or 'backends' not in data or not isinstance(data['backends'], list):
+        return "Valid JSON but invalid format. Needs domain string and backends array"
     domain = data['domain']
     backend_urls = data['backends']
 
@@ -59,12 +62,13 @@ def create_mapping(project_name):
         db.session.add(route)
 
     for backend_url in backend_urls:
+        # FIXME: Add validation for making sure these are valid
         backend = Backend(backend_url)
         backend.route = route
         db.session.add(backend)
 
     db.session.commit()
-    return ""
+    return "", 200
 
 @app.route('/v1/<project>/mapping/<host>', methods=['DELETE'])
 def delete_mapping(project, host):
