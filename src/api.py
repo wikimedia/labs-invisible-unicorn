@@ -70,9 +70,20 @@ def create_mapping(project_name):
     db.session.commit()
     return "", 200
 
-@app.route('/v1/<project>/mapping/<host>', methods=['DELETE'])
-def delete_mapping(project, host):
-    pass
+@app.route('/v1/<project_name>/mapping/<domain>', methods=['DELETE'])
+def delete_mapping(project_name, domain):
+    project = Project.query.filter_by(name=project_name).first()
+    if project is None:
+        return "No such project", 400
+
+    route = Route.query.filter_by(project=project, domain=domain).first()
+    if route is None:
+        return "No such domain", 400
+
+    db.session.delete(route)
+    db.session.commit()
+
+    return "deleted", 200
 
 @app.route('/v1/<project>/mapping/<host>', methods=['GET'])
 def get_mapping(project, host):
