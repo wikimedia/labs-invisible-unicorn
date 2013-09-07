@@ -13,9 +13,6 @@
 #   limitations under the License.
 
 # FIXME: Extremely unoptimized SQL ahead.
-import json
-import sqlite3
-
 import flask
 from flask.ext.sqlalchemy import SQLAlchemy
 
