@@ -38,10 +38,18 @@ class Backend(db.Model):
     def __init__(self, url):
         self.url = url
 
-@app.route('/v1/<project>/mapping', methods=['GET'])
-def all_mappings(project):
-    return project
-    pass
+@app.route('/v1/<project_name>/mapping', methods=['GET'])
+def all_mappings(project_name):
+    project = Project.query.filter_by(name=project_name).first()
+    if project is None:
+        return "No such project", 400
+
+    data = {'project': project.name, 'routes': []}
+    for route in project.routes:
+        data['routes'].append({'domain': route.domain})
+
+    return flask.jsonify(**data)
+
 
 @app.route('/v1/<project_name>/mapping', methods=['PUT'])
 def create_mapping(project_name):
