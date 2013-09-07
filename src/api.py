@@ -17,10 +17,9 @@ import json
 import sqlite3
 
 import flask
-from flask import Flask, g, request
 from flask.ext.sqlalchemy import SQLAlchemy
 
-app = Flask(__name__)
+app = flask.Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
 db = SQLAlchemy(app)
 
@@ -67,7 +66,7 @@ def all_mappings(project_name):
 
 @app.route('/v1/<project_name>/mapping', methods=['PUT'])
 def create_mapping(project_name):
-    data = request.get_json(True)
+    data = flask.request.get_json(True)
 
     if 'domain' not in data or 'backends' not in data or not isinstance(data['backends'], list):
         return "Valid JSON but invalid format. Needs domain string and backends array"
