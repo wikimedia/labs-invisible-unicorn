@@ -2,6 +2,7 @@
 import json
 import sqlite3
 
+import flask
 from flask import Flask, g, request
 from flask.ext.sqlalchemy import SQLAlchemy
 
@@ -100,7 +101,7 @@ def get_mapping(project_name, domain):
     for backend in route.backends:
         data['backends'].append(backend.url)
 
-    return json.dumps(data)
+    return flask.jsonify(**data)
 
 if __name__ == '__main__':
     app.run(debug=True)
