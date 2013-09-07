@@ -82,10 +82,14 @@ class RedisStore(object):
     def delete_route(self, route):
         self.redis.delete('frontend:' + route.domain)
 
-    def update_route(self, route):
+    def update_route(self, route, old_domain=None):
         key = 'frontend:' + route.domain
         backends = [backend.url for backend in route.backends]
-        self.redis.pipeline().delete(key).sadd(key, *backends).execute()
+
+        pipeline = self.redis.pipeline()
+        if old_domain:
+            pipeline.delete('frontend:' + old_domain) #When domains get renamed, kill old one too
+        pipeline.delete(key).sadd(key, *backends).execute()
 
 redis_store = RedisStore(redis.StrictRedis())
 
@@ -161,11 +165,43 @@ def get_mapping(project_name, domain):
     if route is None:
         return "No such domain", 400
 
-    data = {'domain': route.domain, 'backends': []}
-    for backend in route.backends:
-        data['backends'].append(backend.url)
+    data = {'domain': route.domain, 'backends': [backend.url for backend in route.backends]}
 
     return flask.jsonify(**data)
+
+
+@app.route('/v1/<project_name>/mapping/<domain>', methods=['POST'])
+def update_mapping(project_name, domain):
+    project = Project.query.filter_by(name=project_name).first()
+    if project is None:
+        return "No such project", 400
+
+    route = Route.query.filter_by(project=project, domain=domain).first()
+    if route is None:
+        return "No such domain", 400
+
+    data = flask.request.get_json()
+
+    if 'domain' not in data or 'backends' not in data or not isinstance(data['backends'], list):
+        return "Valid JSON but invalid format. Needs domain string and backends array", 400
+
+    new_domain = data['domain']
+    backend_urls = data['backends']
+
+    if route.domain != new_domain:
+        route.domain = new_domain
+        db.session.add(route)
+
+    # Not the most effecient, but I'm sitting in an airplane and this is the simplest from here
+    route.backends.delete()
+    for backend_url in backend_urls:
+        route.backends.append(Backend(backend_url))
+    db.session.add(route)
+    db.session.commit()
+
+    redis_store.update_route(route, old_domain=domain)
+
+    return "OK", 200
 
 if __name__ == '__main__':
     app.run(debug=True)
