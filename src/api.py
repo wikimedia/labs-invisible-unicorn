@@ -27,6 +27,7 @@ This service is considered 'internal' - it will run on the same server as
 the dynamic http proxy, and access a local database & redis instance. This
 API is meant to be used by Wikitech only, and nothing else"""
 import flask
+import redis
 from flask.ext.sqlalchemy import SQLAlchemy
 
 
@@ -73,6 +74,21 @@ class Backend(db.Model):
     def __init__(self, url):
         self.url = url
 
+class RedisStore(object):
+    """Represents a redis instance that has routing info that the proxy reads"""
+    def __init__(self, redis):
+        self.redis = redis
+
+    def delete_route(self, route):
+        self.redis.delete('frontend:' + route.domain)
+
+    def update_route(self, route):
+        key = 'frontend:' + route.domain
+        backends = [backend.url for backend in route.backends]
+        self.redis.pipeline().delete(key).sadd(key, *backends).execute()
+
+redis_store = RedisStore(redis.StrictRedis())
+
 @app.route('/v1/<project_name>/mapping', methods=['GET'])
 def all_mappings(project_name):
     project = Project.query.filter_by(name=project_name).first()
@@ -113,6 +129,9 @@ def create_mapping(project_name):
         db.session.add(backend)
 
     db.session.commit()
+
+    redis_store.update_route(route)
+
     return "", 200
 
 @app.route('/v1/<project_name>/mapping/<domain>', methods=['DELETE'])
@@ -127,6 +146,8 @@ def delete_mapping(project_name, domain):
 
     db.session.delete(route)
     db.session.commit()
+
+    redis_store.delete_route(route)
 
     return "deleted", 200
 
