@@ -1,3 +1,4 @@
+# FIXME: Extremely unoptimized SQL ahead.
 import json
 import sqlite3
 
