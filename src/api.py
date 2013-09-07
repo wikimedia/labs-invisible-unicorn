@@ -12,15 +12,35 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-# FIXME: Extremely unoptimized SQL ahead.
+"""Simple HTTP server that implements the API for controlling a dynamic HTTP Proxy
+
+Stores canonical information about the proxying rules in a database.
+Proxying rules are also replicated to a Redis instance, from where the actual
+dynamic proxy will read them & route requests coming to it appropriately.
+
+The db is the canonical information source, and hence we do not put anything in
+Redis until the data has been commited to the database. Hence it is possible
+for the db call to succeed and the redis call to fail, causing the db and
+redis to be out of sync. Currently this is not really handled by the API.
+
+This service is considered 'internal' - it will run on the same server as
+the dynamic http proxy, and access a local database & redis instance. This
+API is meant to be used by Wikitech only, and nothing else"""
 import flask
 from flask.ext.sqlalchemy import SQLAlchemy
 
+
 app = flask.Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db' # FIXME: move out to a config file
+
 db = SQLAlchemy(app)
 
 class Project(db.Model):
+    """Represents a Wikitech Project.
+    Primary unit of access control.
+    Note: No access control implemented yet :P
+
+    Not represented at the Redis level at all"""
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(256), unique=True)
 
@@ -28,6 +48,9 @@ class Project(db.Model):
         self.name = name
 
 class Route(db.Model):
+    """Represents a route that has one matching rule & multiple backends
+
+    Currently the only supported rule is to match entire domains"""
     id = db.Column(db.Integer, primary_key=True)
     domain = db.Column(db.String(256), unique=True)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
@@ -37,8 +60,10 @@ class Route(db.Model):
     def __init__(self, domain):
         self.domain = domain
 
-
 class Backend(db.Model):
+    """Represents a backend that can have HTTP requests routed to it
+
+    Usually has a URL that is of the form <protocol>://<hostname>:<port>"""
     id = db.Column(db.Integer, primary_key=True)
     url = db.Column(db.String(256))
     route_id = db.Column(db.Integer, db.ForeignKey('route.id'))
