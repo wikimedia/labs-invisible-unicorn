@@ -101,7 +101,7 @@ def all_mappings(project_name):
 
     data = {'project': project.name, 'routes': []}
     for route in project.routes:
-        data['routes'].append({'domain': route.domain})
+        data['routes'].append({'domain': route.domain, 'backends': [backend.url for backend in route.backends]})
 
     return flask.jsonify(**data)
 
