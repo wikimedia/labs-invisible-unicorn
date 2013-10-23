@@ -91,7 +91,7 @@ class RedisStore(object):
             pipeline.delete('frontend:' + old_domain) #When domains get renamed, kill old one too
         pipeline.delete(key).sadd(key, *backends).execute()
 
-redis_store = RedisStore(redis.StrictRedis())
+redis_store = RedisStore(redis.Redis())
 
 @app.route('/v1/<project_name>/mapping', methods=['GET'])
 def all_mappings(project_name):
