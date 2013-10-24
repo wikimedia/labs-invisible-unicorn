@@ -40,6 +40,6 @@ setup(
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
     ],
     entry_points = {
-        'console_scripts': [ 'dynamic-proxy-api = invisible_unicorn.api:main' ]
+        'console_scripts': [ 'dynamicproxy-api = invisible_unicorn.api:main' ]
     }
 )
