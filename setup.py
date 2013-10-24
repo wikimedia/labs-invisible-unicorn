@@ -26,7 +26,7 @@ setup(
     platforms='any',
     install_requires=[
         'setuptools',
-        'Flask>=0.10',
+        'Flask>=0.8',
         'redis',
         'sqlalchemy',
         'Flask-SQLAlchemy',

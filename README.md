@@ -11,7 +11,7 @@ $ sudo python ./setup.py install
 
 # To build a .deb package:
 
-$ sudo apt-get -y install python-stdeb
+$ sudo apt-get -y install python-stdeb gcc python-all fakeroot build-essential
 $ python setup.py --command-packages=stdeb.command bdist_deb
 
 # In either case, a script will be added to your path called dyamic-proxy-api
