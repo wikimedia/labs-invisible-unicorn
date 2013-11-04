@@ -32,7 +32,7 @@ from flask.ext.sqlalchemy import SQLAlchemy
 
 
 app = flask.Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db' # FIXME: move out to a config file
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////etc/dynamicproxy-api/data.db' # FIXME: move out to a config file
 
 db = SQLAlchemy(app)
 
