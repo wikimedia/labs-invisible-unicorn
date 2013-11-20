@@ -82,6 +82,13 @@ class RedisStore(object):
     def delete_route(self, route):
         self.redis.delete('frontend:' + route.domain)
 
+    # Create this route if it does not already exist.
+    def refresh_route(self, route):
+        key = 'frontend:' + route.domain
+	if not (self.redis.exists(key)):
+	    print "Adding new key: %s " % key
+	    self.update_route(route)
+
     def update_route(self, route, old_domain=None):
         key = 'frontend:' + route.domain
         backends = [backend.url for backend in route.backends]
@@ -203,8 +210,15 @@ def update_mapping(project_name, domain):
 
     return "OK", 200
 
-if __name__ == '__main__':
-    app.run(debug=True)
+def update_redis_from_db():
+    projects = Project.query.all()
 
-def main():
+    for project in projects:
+        for route in project.routes:
+	    print "Refreshing route:  %s " % route
+            redis_store.refresh_route(route)
+update_redis_from_db()
+
+
+if __name__ == '__main__':
     app.run(debug=True)
