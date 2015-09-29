@@ -1,0 +1,3 @@
+version=3
+opts=filenamemangle=s/.+\/v?(\d\S*)\.tar\.gz/python-mwapi-$1\.tar\.gz/ \
+  https://github.com/mediawiki-utilities/python-mwapi/tags .*/v?(\d\S*)\.tar\.gz

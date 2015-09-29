@@ -1,0 +1,11 @@
+Source: invisible-unicorn
+Maintainer: Yuvi Panda <yuvipanda@riseup.net>
+Section: python
+Priority: optional
+Build-Depends: python-setuptools, python-all, debhelper (>= 9)
+Standards-Version: 3.9.6
+
+Package: invisible-unicorn
+Architecture: any
+Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends}
+Description: HTTP interface to dynamicproxy for wikitech
