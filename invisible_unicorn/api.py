@@ -28,6 +28,7 @@ the dynamic http proxy, and access a local database & redis instance. This
 API is meant to be used by Wikitech only, and nothing else"""
 import flask
 import redis
+import re
 from flask.ext.sqlalchemy import SQLAlchemy
 
 
@@ -100,6 +101,18 @@ class RedisStore(object):
 
 redis_store = RedisStore(redis.Redis())
 
+def is_valid_domain(hostname):
+    """
+    Credit for this function goes to Tim Pietzcker and other StackOverflow contributors
+    See https://stackoverflow.com/a/2532344
+    """
+    if len(hostname) > 255:
+        return False
+    if hostname[-1] == ".":
+        hostname = hostname[:-1] # strip exactly one dot from the right, if present
+    allowed = re.compile("(?!-)[A-Z\d-]{1,63}(?<!-)$", re.IGNORECASE)
+    return all(allowed.match(x) for x in hostname.split("."))
+
 @app.route('/v1/<project_name>/mapping', methods=['GET'])
 def all_mappings(project_name):
     project = Project.query.filter_by(name=project_name).first()
@@ -120,6 +133,8 @@ def create_mapping(project_name):
     if 'domain' not in data or 'backends' not in data or not isinstance(data['backends'], list):
         return "Valid JSON but invalid format. Needs domain string and backends array"
     domain = data['domain']
+    if not is_valid_domain(domain):
+        return "Invalid domain", 400
     backend_urls = data['backends']
 
     project = Project.query.filter_by(name=project_name).first()
@@ -193,6 +208,8 @@ def update_mapping(project_name, domain):
         return "Valid JSON but invalid format. Needs domain string and backends array", 400
 
     new_domain = data['domain']
+    if not is_valid_domain(new_domain):
+        return "Invalid domain", 400
     backend_urls = data['backends']
 
     if route.domain != new_domain:
